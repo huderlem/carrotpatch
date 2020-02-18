@@ -28,14 +28,20 @@ SOURCES += \
     tileset.cpp \
     level.cpp \
     map.cpp \
-    log.cpp
+    log.cpp \
+    selectablepixmapitem.cpp \
+    metatileselector.cpp \
+    metatileselectionpixmapitem.cpp
 
 HEADERS += \
         mainwindow.h \
     tileset.h \
     level.h \
     map.h \
-    log.h
+    log.h \
+    selectablepixmapitem.h \
+    metatileselector.h \
+    metatileselectionpixmapitem.h
 
 FORMS += \
         mainwindow.ui

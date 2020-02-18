@@ -22,7 +22,6 @@ public:
     }
     static Tileset buildTileset(QString tilesImageFilepath, QString metatilesFilepath, int tilesBaseAddress);
     QImage getMetatileImage(int metatileId);
-private:
     QMap<int, QImage> tiles;
     QList<QImage> metatiles;
     QList<Metatile> metatileDefinitions;
