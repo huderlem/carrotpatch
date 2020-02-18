@@ -1,0 +1,10 @@
+*.pro.user
+*.autosave
+*.stash
+*.o
+
+# Qt generated files
+ui_*.h
+moc_*.h
+moc_*.cpp
+qrc_*.cpp
