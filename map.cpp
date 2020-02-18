@@ -111,10 +111,10 @@ void Map::getBlocks(QList<QByteArray> *blockDefinitions, QList<int> *blocks) {
             QByteArray blockDefinition;
             for (int k = 0; k < 4; k++) {
                 int index = (j * this->metatileWidth * 4) + (i * 4) + k * this->metatileWidth;
-                blockDefinition.append(static_cast<char>(this->metatiles[index]));
-                blockDefinition.append(static_cast<char>(this->metatiles[index + 1]));
-                blockDefinition.append(static_cast<char>(this->metatiles[index + 2]));
-                blockDefinition.append(static_cast<char>(this->metatiles[index + 3]));
+                blockDefinition.append(static_cast<char>(this->tiles[index]->metatileId));
+                blockDefinition.append(static_cast<char>(this->tiles[index + 1]->metatileId));
+                blockDefinition.append(static_cast<char>(this->tiles[index + 2]->metatileId));
+                blockDefinition.append(static_cast<char>(this->tiles[index + 3]->metatileId));
             }
             if (!blockMap.contains(blockDefinition)) {
                 blockMap.insert(blockDefinition, blockMap.size());
@@ -125,20 +125,35 @@ void Map::getBlocks(QList<QByteArray> *blockDefinitions, QList<int> *blocks) {
     }
 }
 
-int Map::getMetatileId(int x, int y) {
-    int index = y * this->metatileWidth + x;
-    if (index > this->metatiles.size()) {
-        logError(QString("Invalid map coordinates (%1, %2). Map dimensions are %3x%4").arg(x).arg(y).arg(this->metatileWidth).arg(this->metatileHeight));
-        return 0;
+Tile *Map::getTile(int x, int y) {
+    if (!this->isInBounds(x, y)) {
+        return nullptr;
     }
-    return this->metatiles[index];
+    int index = y * this->metatileWidth + x;
+    return this->tiles[index];
 }
 
 void Map::setMetatileId(int x, int y, uchar metatileId) {
-    int index = y * this->metatileWidth + x;
-    if (index > this->metatiles.size()) {
+    if (!this->isInBounds(x, y)) {
         logError(QString("Invalid map coordinates (%1, %2). Map dimensions are %3x%4").arg(x).arg(y).arg(this->metatileWidth).arg(this->metatileHeight));
         return;
     }
-    this->metatiles[index] = metatileId;
+    int index = y * this->metatileWidth + x;
+    this->tiles[index]->metatileId = metatileId;
+}
+
+bool Map::isInBounds(int x, int y) {
+    return x >= 0 && x < this->metatileWidth && y >= 0 && y < this->metatileHeight;
+}
+
+void Map::cacheMetatiles() {
+    this->cachedMetatiles.clear();
+    for (Tile *tile : this->tiles) {
+        this->cachedMetatiles.append(tile->metatileId);
+    }
+}
+
+bool Map::metatileChanged(int x, int y) {
+    int index = y * this->metatileWidth + x;
+    return this->tiles[index]->metatileId != this->cachedMetatiles[index];
 }

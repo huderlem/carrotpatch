@@ -9,31 +9,41 @@ Level Level::loadLevel(QString tilesImageFilepath, QString metatilesFilepath, QS
     return Level(tileset, map);
 }
 
-QPixmap Level::render() {
+QPixmap Level::render(bool ignoreCache) {
+    bool changedAny = false;
     int metatileWidth = this->map.getMetatileWidth();
     int metatileHeight = this->map.getMetatileHeight();
-    QImage levelImage = QImage(metatileWidth * 16, metatileHeight * 16, QImage::Format_RGBA8888);
-    QPainter levelPainter(&levelImage);
-    for (int j = 0; j < metatileHeight; j++) {
-        for (int i = 0; i < metatileWidth; i++) {
-            int metatileId = this->map.getMetatileId(i, j);
-            QImage metatileImage = this->tileset.getMetatileImage(metatileId);
-            QPoint origin = QPoint(i * 16, j * 16);
-            levelPainter.drawImage(origin, metatileImage);
-        }
+    if (this->mapImage.isNull()
+            || this->mapImage.width() != metatileWidth * 16
+            || this->mapImage.height() != metatileHeight * 16
+    ) {
+        this->mapImage = QImage(metatileWidth * 16, metatileHeight * 16, QImage::Format_RGBA8888);
+        changedAny = true;
     }
 
-    levelPainter.drawImage(QPoint(0, 0), this->tileset.getMetatileImage(0x0));
-    levelPainter.drawImage(QPoint(16, 0), this->tileset.getMetatileImage(0x0));
-    levelPainter.drawImage(QPoint(32, 0), this->tileset.getMetatileImage(0x0));
-    levelPainter.drawImage(QPoint(48, 0), this->tileset.getMetatileImage(0x0));
-    levelPainter.drawImage(QPoint(64, 0), this->tileset.getMetatileImage(0x0));
-    levelPainter.drawImage(QPoint(80, 0), this->tileset.getMetatileImage(0x0));
-
+    QPainter levelPainter(&this->mapImage);
+    for (int j = 0; j < metatileHeight; j++) {
+        for (int i = 0; i < metatileWidth; i++) {
+            if (!ignoreCache && !this->map.metatileChanged(i, j)) {
+                continue;
+            }
+            Tile *tile = this->map.getTile(i, j);
+            if (tile) {
+                changedAny = true;
+                QImage metatileImage = this->tileset.getMetatileImage(tile->metatileId);
+                QPoint origin = QPoint(i * 16, j * 16);
+                levelPainter.drawImage(origin, metatileImage);
+            }
+        }
+    }
     levelPainter.end();
 
-    QPixmap pixmap;
-    return pixmap.fromImage(levelImage);
+    if (changedAny) {
+        this->map.cacheMetatiles();
+        this->mapPixmap = this->mapPixmap.fromImage(this->mapImage);
+    }
+
+    return this->mapPixmap;
 }
 
 void Level::save(QString mapFilepath) {

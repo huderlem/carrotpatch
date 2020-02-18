@@ -11,21 +11,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QCoreApplication::setOrganizationName("huderlem");
     QCoreApplication::setApplicationName("carrotpatch");
     ui->setupUi(this);
+    this->mapEditMode = "paint";
+    this->cursorTileRect = new CursorTileRect(true, qRgb(255, 255, 255));
 
     QString tilesImageFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/gfx/treasure_island/level_tiles.png");
     QString metatilesFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_metatiles.bin");
     QString mapFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_1.vdmap");
-    Level level = Level::loadLevel(tilesImageFilepath, metatilesFilepath, mapFilepath, 0x8B20);
+    this->level = Level::loadLevel(tilesImageFilepath, metatilesFilepath, mapFilepath, 0x8B20);
 
-    QGraphicsScene *scene = new QGraphicsScene;
-    QPixmap pixmap = level.render();
-    scene->addPixmap(pixmap);
-    ui->mapGraphicsView->setScene(scene);
-    ui->mapGraphicsView->setSceneRect(scene->sceneRect());
-    ui->mapGraphicsView->setFixedSize(pixmap.width() + 2, pixmap.height() + 2);
-
-    this->displayMetatileSelector(level.tileset);
-    this->displayMetatileSelection(level.tileset);
+    this->displayMetatileSelector(this->level.tileset);
+    this->displayMetatileSelection(this->level.tileset);
+    this->displayMap(&this->level);
 }
 
 MainWindow::~MainWindow()
@@ -80,6 +76,40 @@ void MainWindow::displayMetatileSelection(Tileset tileset) {
     ui->metatileSelectionGraphicsView->setFixedSize(this->metatileSelection->pixmap().width() + 2, this->metatileSelection->pixmap().height() + 2);
 }
 
+void MainWindow::displayMap(Level *level) {
+    if (this->mapPixmapItem && this->mapPixmapItem->scene()) {
+        this->mapPixmapItem->scene()->removeItem(this->mapPixmapItem);
+        delete this->mapScene;
+    }
+    if (this->mapPixmapItem) {
+        delete this->mapPixmapItem;
+        this->mapPixmapItem = nullptr;
+    }
+
+    this->mapScene = new QGraphicsScene;
+    this->mapPixmapItem = new MapPixmapItem(level, this->metatileSelector);
+    connect(this->mapPixmapItem, SIGNAL(mouseEvent(QGraphicsSceneMouseEvent*,MapPixmapItem*)),
+            this, SLOT(mouseEvent_map(QGraphicsSceneMouseEvent*,MapPixmapItem*)));
+    connect(this->mapPixmapItem, SIGNAL(startPaint(QGraphicsSceneMouseEvent*,MapPixmapItem*)),
+            this, SLOT(onMapStartPaint(QGraphicsSceneMouseEvent*,MapPixmapItem*)));
+    connect(this->mapPixmapItem, SIGNAL(endPaint(QGraphicsSceneMouseEvent*,MapPixmapItem*)),
+            this, SLOT(onMapEndPaint(QGraphicsSceneMouseEvent*,MapPixmapItem*)));
+    connect(this->mapPixmapItem, SIGNAL(hoveredMapMetatileChanged(int, int)),
+            this, SLOT(onHoveredMapMetatileChanged(int, int)));
+    connect(this->mapPixmapItem, SIGNAL(hoveredMapMetatileCleared()),
+            this, SLOT(onHoveredMapMetatileCleared()));
+
+    this->mapPixmapItem->draw(true);
+    this->mapScene->addItem(this->mapPixmapItem);
+
+    ui->mapGraphicsView->setScene(this->mapScene);
+    ui->mapGraphicsView->setSceneRect(this->mapScene->sceneRect());
+    ui->mapGraphicsView->setFixedSize(this->mapPixmapItem->pixmap().width() + 2, this->mapPixmapItem->pixmap().height() + 2);
+
+    this->cursorTileRect->setZValue(1001);
+    this->mapScene->addItem(this->cursorTileRect);
+}
+
 void MainWindow::onHoveredMetatileSelectionChanged(uchar metatileId) {
     QString hexString = QString("%1").arg(metatileId, 3, 16, QChar('0')).toUpper();
     QString message = QString("Metatile: 0x%1").arg(hexString);
@@ -92,10 +122,96 @@ void MainWindow::onHoveredMetatileSelectionCleared() {
 
 void MainWindow::onSelectedMetatilesChanged() {
     QPoint size = this->metatileSelector->getSelectionDimensions();
-//    this->cursorMapTileRect->updateSelectionSize(size.x(), size.y());
+    this->cursorTileRect->updateSelectionSize(size.x(), size.y());
     if (this->metatileSelection) {
         this->metatileSelection->draw();
         ui->metatileSelectionGraphicsView->setSceneRect(this->metatileSelectionScene->sceneRect());
         ui->metatileSelectionGraphicsView->setFixedSize(this->metatileSelection->pixmap().width() + 2, this->metatileSelection->pixmap().height() + 2);
+    }
+}
+
+void MainWindow::mouseEvent_map(QGraphicsSceneMouseEvent *event, MapPixmapItem *item) {
+    if (!item->paintingEnabled) {
+        return;
+    }
+
+    if (this->mapEditMode == "paint") {
+        if (event->buttons() & Qt::RightButton) {
+            item->updateMetatileSelection(event);
+        } else if (event->buttons() & Qt::MiddleButton) {
+            if (event->modifiers() & Qt::ControlModifier) {
+                item->magicFill(event);
+            } else {
+                item->floodFill(event);
+            }
+        } else {
+            item->paint(event);
+        }
+    } else if (this->mapEditMode == "select") {
+        item->select(event);
+    } else if (this->mapEditMode == "fill") {
+        if (event->buttons() & Qt::RightButton) {
+            item->updateMetatileSelection(event);
+        } else if (event->modifiers() & Qt::ControlModifier) {
+            item->magicFill(event);
+        } else {
+            item->floodFill(event);
+        }
+    } else if (this->mapEditMode == "pick") {
+
+        if (event->buttons() & Qt::RightButton) {
+            item->updateMetatileSelection(event);
+        } else {
+            item->pick(event);
+        }
+    }
+
+    QPointF pos = event->pos();
+    int x = static_cast<int>(pos.x()) / 16;
+    int y = static_cast<int>(pos.y()) / 16;
+    // this->playerViewRect->updateLocation(x, y);
+    this->cursorTileRect->updateLocation(x, y);
+}
+
+void MainWindow::onMapStartPaint(QGraphicsSceneMouseEvent *event, MapPixmapItem *item) {
+    if (!item->paintingEnabled) {
+        return;
+    }
+
+    QPointF pos = event->pos();
+    int x = static_cast<int>(pos.x()) / 16;
+    int y = static_cast<int>(pos.y()) / 16;
+    if (event->buttons() & Qt::RightButton && (this->mapEditMode == "paint" || this->mapEditMode == "fill")) {
+        this->cursorTileRect->initRightClickSelectionAnchor(x, y);
+    } else {
+        this->cursorTileRect->initAnchor(x, y);
+    }
+}
+
+void MainWindow::onMapEndPaint(QGraphicsSceneMouseEvent *, MapPixmapItem *item) {
+    if (!item->paintingEnabled) {
+        return;
+    }
+    this->cursorTileRect->stopRightClickSelectionAnchor();
+    this->cursorTileRect->stopAnchor();
+}
+
+void MainWindow::onHoveredMapMetatileChanged(int x, int y) {
+    this->cursorTileRect->updateLocation(x, y);
+    if (this->mapPixmapItem->paintingEnabled && x >= 0 && x < this->level.map.getMetatileWidth() && y >= 0 && y < this->level.map.getMetatileHeight()) {
+        Tile *tile = this->level.map.getTile(x, y);
+        if (tile) {
+            this->ui->statusBar->showMessage(QString("X: %1, Y: %2, Metatile: 0x%3")
+                .arg(x)
+                .arg(y)
+                .arg(QString("%1").arg(tile->metatileId, 3, 16, QChar('0')).toUpper()));
+        }
+    }
+}
+
+void MainWindow::onHoveredMapMetatileCleared() {
+    this->cursorTileRect->setVisible(false);
+    if (this->mapPixmapItem->paintingEnabled) {
+        this->ui->statusBar->clearMessage();
     }
 }

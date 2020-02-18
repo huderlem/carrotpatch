@@ -31,7 +31,9 @@ SOURCES += \
     log.cpp \
     selectablepixmapitem.cpp \
     metatileselector.cpp \
-    metatileselectionpixmapitem.cpp
+    metatileselectionpixmapitem.cpp \
+    cursortilerect.cpp \
+    mappixmapitem.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -41,7 +43,9 @@ HEADERS += \
     log.h \
     selectablepixmapitem.h \
     metatileselector.h \
-    metatileselectionpixmapitem.h
+    metatileselectionpixmapitem.h \
+    cursortilerect.h \
+    mappixmapitem.h
 
 FORMS += \
         mainwindow.ui
