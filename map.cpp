@@ -135,7 +135,6 @@ Tile *Map::getTile(int x, int y) {
 
 void Map::setMetatileId(int x, int y, uchar metatileId) {
     if (!this->isInBounds(x, y)) {
-        logError(QString("Invalid map coordinates (%1, %2). Map dimensions are %3x%4").arg(x).arg(y).arg(this->metatileWidth).arg(this->metatileHeight));
         return;
     }
     int index = y * this->metatileWidth + x;

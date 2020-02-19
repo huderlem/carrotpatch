@@ -21,6 +21,7 @@ public:
         this->metatileDefinitions = metatileDefinitions;
     }
     static Tileset buildTileset(QString tilesImageFilepath, QString metatilesFilepath, int tilesBaseAddress);
+    static Tileset buildTilesetGBC(QString tilesImageFilepath, QString metatilesFilepath, int tilesBaseAddress, QString tileAttributesFilepath, int palettesId);
     QImage getMetatileImage(int metatileId);
     QMap<int, QImage> tiles;
     QList<QImage> metatiles;

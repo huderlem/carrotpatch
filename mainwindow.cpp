@@ -14,10 +14,12 @@ MainWindow::MainWindow(QWidget *parent) :
     this->mapEditMode = "paint";
     this->cursorTileRect = new CursorTileRect(true, qRgb(255, 255, 255));
 
-    QString tilesImageFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/gfx/treasure_island/level_tiles.png");
-    QString metatilesFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_metatiles.bin");
-    QString mapFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_1.vdmap");
-    this->level = Level::loadLevel(tilesImageFilepath, metatilesFilepath, mapFilepath, 0x8B20);
+    QString tilesImageFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/gfx/treasure_island/level_tiles_gbc.png");
+    QString metatilesFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_metatiles_gbc.bin");
+    QString mapFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_1_gbc.vdmap");
+    QString tileAttributesFilepath = QString("D:/cygwin64/home/huder/carrotcrazy/gfx/treasure_island/tile_attributes_gbc.bin");
+    int levelPalette = 0;
+    this->level = Level::loadLevelGBC(tilesImageFilepath, metatilesFilepath, mapFilepath, 0x8a00, tileAttributesFilepath, levelPalette);
 
     this->displayMetatileSelector(this->level.tileset);
     this->displayMetatileSelection(this->level.tileset);

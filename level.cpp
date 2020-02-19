@@ -9,6 +9,12 @@ Level Level::loadLevel(QString tilesImageFilepath, QString metatilesFilepath, QS
     return Level(tileset, map);
 }
 
+Level Level::loadLevelGBC(QString tilesImageFilepath, QString metatilesFilepath, QString mapFilepath, int tilesBaseAddress, QString tileAttributesFilepath, int palettesId) {
+    Tileset tileset = Tileset::buildTilesetGBC(tilesImageFilepath, metatilesFilepath, tilesBaseAddress, tileAttributesFilepath, palettesId);
+    Map map = Map::loadMap(mapFilepath);
+    return Level(tileset, map);
+}
+
 QPixmap Level::render(bool ignoreCache) {
     bool changedAny = false;
     int metatileWidth = this->map.getMetatileWidth();
