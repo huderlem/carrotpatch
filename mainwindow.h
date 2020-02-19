@@ -42,6 +42,7 @@ private slots:
     void onMapEndPaint(QGraphicsSceneMouseEvent *, MapPixmapItem *item);
     void onHoveredMapMetatileChanged(int x, int y);
     void onHoveredMapMetatileCleared();
+    void on_actionSave_Map_triggered();
 };
 
 #endif // MAINWINDOW_H

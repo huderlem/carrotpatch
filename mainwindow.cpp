@@ -215,3 +215,8 @@ void MainWindow::onHoveredMapMetatileCleared() {
         this->ui->statusBar->clearMessage();
     }
 }
+
+void MainWindow::on_actionSave_Map_triggered()
+{
+    this->level.save("D:/cygwin64/home/huder/carrotcrazy/data/levels/treasure_island_1_test.vdmap");
+}

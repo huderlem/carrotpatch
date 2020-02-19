@@ -29,7 +29,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>346</width>
+          <width>340</width>
           <height>481</height>
          </rect>
         </property>
@@ -101,7 +101,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>353</width>
+          <width>359</width>
           <height>481</height>
          </rect>
         </property>
@@ -128,7 +128,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>315</width>
+                 <width>321</width>
                  <height>196</height>
                 </rect>
                </property>
@@ -201,7 +201,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>333</width>
+              <width>339</width>
               <height>226</height>
              </rect>
             </property>
@@ -260,6 +260,7 @@
      <string>File</string>
     </property>
     <addaction name="actionLoad_Map"/>
+    <addaction name="actionSave_Map"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -275,6 +276,11 @@
   <action name="actionLoad_Map">
    <property name="text">
     <string>Load Map...</string>
+   </property>
+  </action>
+  <action name="actionSave_Map">
+   <property name="text">
+    <string>Save Map...</string>
    </property>
   </action>
  </widget>
